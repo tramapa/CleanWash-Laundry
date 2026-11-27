@@ -514,8 +514,7 @@
 
   <script>
     /* ====== PENGATURAN CHATBOT ====== */
-    const OLLAMA_URL = "http://localhost:11434/api/chat"; // Ollama lokal
-    const MODEL = "llama3.2";
+    const API_URL = "https://runtime-jelsoft-mats-ide.trycloudflare.com/chat";
 
     // Edit info bisnis di sini. Bot hanya akan menjawab berdasarkan info ini.
     const INFO = `
@@ -581,38 +580,43 @@ Kontak: WhatsApp 0851-7746-5221. Alamat: Jagir Wonokromo, Surabaya.
       }
     };
 
-    async function send(text) {
-      $("quick").style.display = "none";
-      add(text, "me");
-      history.push({ role: "user", content: text });
-      const bubble = add("Sedang mengetik...", "bot");
+    
+  async function send(text) {
+  $("quick").style.display = "none";
+  add(text, "me");
 
-      try {
-        const r = await fetch(OLLAMA_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: MODEL,
-            stream: false,
-            messages: [{ role: "system", content: SYSTEM }, ...history.slice(-8)]
-          })
-        });
+  const bubble = add("Sedang mengetik...", "bot");
 
-        if (!r.ok) throw new Error(r.status);
+  try {
+    const r = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: text
+      })
+    });
 
-        const data = await r.json();
-        const reply = data.message.content.trim();
-        bubble.textContent = reply;
-        history.push({ role: "assistant", content: reply });
-      } catch (err) {
-        const hit = FALLBACK.find(([re]) => re.test(text));
-        bubble.textContent = hit
-          ? hit[1]
-          : "Maaf, saya belum bisa menjawab itu. Silakan hubungi kami lewat WhatsApp 0851-7746-5221.";
-      }
+    if (!r.ok) throw new Error(r.status);
 
-      msgs.scrollTop = msgs.scrollHeight;
-    }
+    const data = await r.json();
+    const reply = data.reply.trim();
+
+    bubble.textContent = reply;
+
+  } catch (err) {
+    console.error("Chat API error:", err);
+
+    const hit = FALLBACK.find(([re]) => re.test(text));
+
+    bubble.textContent = hit
+      ? hit[1]
+      : "Maaf, saya belum bisa menjawab itu. Silakan hubungi kami lewat WhatsApp 0851-7746-5221.";
+  }
+
+  msgs.scrollTop = msgs.scrollHeight;
+}
   </script>
 
 </body>
